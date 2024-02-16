@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"outbox-transactional/cmd/config"
+	"outbox-transactional/internal/kafka"
+
+	orderRepo "outbox-transactional/internal/pkg/repository/order"
+	orderUCase "outbox-transactional/internal/usecase/order"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 )
 
@@ -55,12 +61,13 @@ func mainNoExit(log *slog.Logger) error {
 	// echo
 	// r.HandleFunc(echoRoute, echo_handler.Handler("Your message: ").ServeHTTP).Methods("GET")
 
-	// pool, err := pgxpool.Connect(context.Background(), cfg.DbConnString)
-	// if err != nil {
-	// 	return fmt.Errorf("can't create pg pool: %s", err.Error())
-	// }
-	// repo := orderRepo.New(pool)
-	// orderUseCase := orderUCase.New(repo, kafka.NewProducer(cfg.KafkaPort))
+	pool, err := pgxpool.Connect(context.Background(), cfg.DbConnString)
+	if err != nil {
+		return fmt.Errorf("can't create pg pool: %s", err.Error())
+	}
+
+	repo := orderRepo.New(pool)
+	orderUseCase := orderUCase.New(repo, kafka.NewProducer(cfg.KafkaPort))
 
 	// createOrderHandleFunc := create_order_handler.New(orderUseCase, log).Create(ctx).ServeHTTP
 	// // create order
