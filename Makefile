@@ -14,6 +14,9 @@ run: build
 runx:
 	go run cmd/main.go --conf=config.yaml
 
+runx-kafka:
+	go run cmd/cron/outbox_producer/outbox_producer.go  --conf=config.yaml
+
 kafka:
 	/home/user/kafka_2.13-3.6.1/bin/kafka-console-consumer.sh --topic quickstart-events --from-beginning --bootstrap-server localhost:9092
 

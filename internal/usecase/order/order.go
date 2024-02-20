@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"outbox-transactional/internal/kafka"
 	"outbox-transactional/internal/pkg/entity/order"
 	orderRepo "outbox-transactional/internal/pkg/repository/order"
 
@@ -29,21 +30,21 @@ func New(orderRepo orderRepo.OrderRepo, producer sarama.SyncProducer) *Usecase {
 
 // Save single order
 func (uc *Usecase) Save(ctx context.Context, log slog.Logger, order *order.Order) error {
-	_, err := uc.repo.Save(ctx, log, order)
+	orderID, err := uc.repo.Save(ctx, log, order)
 	if err != nil {
 		return errors.Wrap(err, "repo.Save")
 	}
 
-	/*if order.UserID == cursedUser {
-		return errors.New("some err")
-	}
+	// if order.UserID == cursedUser {
+	// 	return errors.New("some err")
+	// }
 
 	if _, _, err = uc.producer.SendMessage(&sarama.ProducerMessage{
 		Topic: kafka.Topic,
 		Value: sarama.StringEncoder(fmt.Sprintf("{order_id:%d}", orderID)),
 	}); err != nil {
 		return errors.Wrap(err, "producer.SendMessage")
-	}*/
+	}
 
 	// tx.Commit()
 

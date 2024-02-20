@@ -13,6 +13,10 @@ import (
 	orderRepo "outbox-transactional/internal/pkg/repository/order"
 	orderUCase "outbox-transactional/internal/usecase/order"
 
+	create_order_handler "outbox-transactional/handler/create_order"
+	echo_handler "outbox-transactional/handler/echo"
+	get_orders_handler "outbox-transactional/handler/get_orders"
+
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
@@ -54,12 +58,12 @@ func mainNoExit(log *slog.Logger) error {
 	log.Info("cfg:", slog.Any("cfg", cfg))
 	log.Info("Starting the service...")
 
-	// ctx := context.Background()
+	ctx := context.Background()
 
 	r := mux.NewRouter()
 
 	// echo
-	// r.HandleFunc(echoRoute, echo_handler.Handler("Your message: ").ServeHTTP).Methods("GET")
+	r.HandleFunc(echoRoute, echo_handler.Handler("Your message: ").ServeHTTP).Methods("GET")
 
 	pool, err := pgxpool.Connect(context.Background(), cfg.DbConnString)
 	if err != nil {
@@ -69,17 +73,17 @@ func mainNoExit(log *slog.Logger) error {
 	repo := orderRepo.New(pool)
 	orderUseCase := orderUCase.New(repo, kafka.NewProducer(cfg.KafkaPort))
 
-	// createOrderHandleFunc := create_order_handler.New(orderUseCase, log).Create(ctx).ServeHTTP
-	// // create order
-	// r.HandleFunc(orderRoute, createOrderHandleFunc).Methods("POST")
+	createOrderHandleFunc := create_order_handler.New(orderUseCase, log).Create(ctx).ServeHTTP
+	// create order
+	r.HandleFunc(orderRoute, createOrderHandleFunc).Methods("POST")
 
-	// getOrderHandlerFunc := get_orders_handler.New(orderUseCase, log).Get(ctx).ServeHTTP
-	// // get orders
-	// r.HandleFunc(ordersRoute, getOrderHandlerFunc).Methods("GET")
+	getOrderHandlerFunc := get_orders_handler.New(orderUseCase, log).Get(ctx).ServeHTTP
+	// get orders
+	r.HandleFunc(ordersRoute, getOrderHandlerFunc).Methods("GET")
 
-	// if err != nil {
-	// 	return fmt.Errorf("can't init router: %s", err.Error())
-	// }
+	if err != nil {
+		return fmt.Errorf("can't init router: %s", err.Error())
+	}
 
 	log.Info("The service is ready to listen and serve.")
 
