@@ -64,7 +64,7 @@ func (h Handler) Get(ctx context.Context) http.Handler {
 			return
 		}
 
-		orders, err := h.uCase.Get(ctx, h.log, in.IDs)
+		orders, err := h.uCase.Get(ctx, in.IDs)
 		if err != nil {
 			h.log.Error("can't get orders: %s", err)
 			http.Error(w, "can't get orders: "+err.Error(), http.StatusInternalServerError)

@@ -70,7 +70,7 @@ func mainNoExit(log *slog.Logger) error {
 		return fmt.Errorf("can't create pg pool: %s", err.Error())
 	}
 
-	repo := orderRepo.New(pool)
+	repo := orderRepo.New(pool, log)
 	orderUseCase := orderUCase.New(repo, kafka.NewProducer(cfg.KafkaPort))
 
 	createOrderHandleFunc := create_order_handler.New(orderUseCase, log).Create(ctx).ServeHTTP

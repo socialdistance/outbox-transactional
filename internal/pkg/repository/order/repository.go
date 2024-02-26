@@ -29,24 +29,25 @@ const (
 
 type Repository struct {
 	db *pgxpool.Pool
+	log *slog.Logger
 }
 
 //go:generate ${MOQPATH}moq -skip-ensure -pkg mocks -out ./mocks2/repo_mock.go . OrderRepo
 type OrderRepo interface {
-	Save(ctx context.Context, log slog.Logger, order *order_entity.Order) (uint64, error)
-	Get(ctx context.Context, log slog.Logger, IDs []uint64) (map[uint64]order.Order, error)
+	Save(ctx context.Context, order *order_entity.Order) (uint64, error)
+	Get(ctx context.Context, IDs []uint64) (map[uint64]order.Order, error)
 }
 
 // New instance of repository.
-func New(pool *pgxpool.Pool) *Repository {
-
+func New(pool *pgxpool.Pool, log *slog.Logger) *Repository {
 	return &Repository{
 		db: pool,
+		log: log,
 	}
 }
 
 // Save new order to DB.
-func (r *Repository) Save(ctx context.Context, log slog.Logger, order *order_entity.Order) (uint64, error) {
+func (r *Repository) Save(ctx context.Context, order *order_entity.Order) (uint64, error) {
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("can't create tx: %s", err.Error())
@@ -148,7 +149,7 @@ func (r *Repository) Save(ctx context.Context, log slog.Logger, order *order_ent
 }
 
 // Get returns map of orders.
-func (r *Repository) Get(ctx context.Context, log slog.Logger, IDs []uint64) (map[uint64]order.Order, error) {
+func (r *Repository) Get(ctx context.Context, IDs []uint64) (map[uint64]order.Order, error) {
 	ordersMap := make(map[uint64]order.Order, len(IDs))
 	or := sq.Or{}
 	orOrderItems := sq.Or{}

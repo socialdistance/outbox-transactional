@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"outbox-transactional/internal/kafka"
 	"outbox-transactional/internal/pkg/entity/order"
 	orderRepo "outbox-transactional/internal/pkg/repository/order"
 
@@ -30,7 +29,7 @@ func New(orderRepo orderRepo.OrderRepo, producer sarama.SyncProducer) *Usecase {
 
 // Save single order
 func (uc *Usecase) Save(ctx context.Context, log slog.Logger, order *order.Order) error {
-	orderID, err := uc.repo.Save(ctx, log, order)
+	_, err := uc.repo.Save(ctx, order)
 	if err != nil {
 		return errors.Wrap(err, "repo.Save")
 	}
@@ -39,12 +38,12 @@ func (uc *Usecase) Save(ctx context.Context, log slog.Logger, order *order.Order
 	// 	return errors.New("some err")
 	// }
 
-	if _, _, err = uc.producer.SendMessage(&sarama.ProducerMessage{
-		Topic: kafka.Topic,
-		Value: sarama.StringEncoder(fmt.Sprintf("{order_id:%d}", orderID)),
-	}); err != nil {
-		return errors.Wrap(err, "producer.SendMessage")
-	}
+	// if _, _, err = uc.producer.SendMessage(&sarama.ProducerMessage{
+	// 	Topic: kafka.Topic,
+	// 	Value: sarama.StringEncoder(fmt.Sprintf("{order_id:%d}", orderID)),
+	// }); err != nil {
+	// 	return errors.Wrap(err, "producer.SendMessage")
+	// }
 
 	// tx.Commit()
 
@@ -52,8 +51,8 @@ func (uc *Usecase) Save(ctx context.Context, log slog.Logger, order *order.Order
 }
 
 // Get orders by ids
-func (uc *Usecase) Get(ctx context.Context, log slog.Logger, IDs []uint64) ([]order.Order, error) {
-	ordersMap, err := uc.repo.Get(ctx, log, IDs)
+func (uc *Usecase) Get(ctx context.Context, IDs []uint64) ([]order.Order, error) {
+	ordersMap, err := uc.repo.Get(ctx, IDs)
 	if err != nil {
 		return nil, fmt.Errorf("err from orders_repository: %s", err.Error())
 	}
